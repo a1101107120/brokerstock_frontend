@@ -1,0 +1,7 @@
+{
+    "service": "brokerstock-frontend",
+    "port": 80,
+    "build": {
+        "builder": "docker"
+    }
+}
