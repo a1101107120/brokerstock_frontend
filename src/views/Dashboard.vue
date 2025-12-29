@@ -1,6 +1,6 @@
 <template>
-  <div class="container mx-auto p-4">
-    <h1 class="text-2xl sm:text-3xl font-bold mb-6">
+  <div class="w-full max-w-full px-2 sm:px-4 py-4">
+    <h1 class="text-xl sm:text-3xl font-bold mb-6 break-words">
       券商查看
       <span v-if="stockNumber" class="block sm:inline text-gray-500 text-lg sm:text-2xl mt-1 sm:mt-0 sm:ml-2">
         - 
@@ -11,31 +11,33 @@
       <span v-else class="block sm:inline text-gray-500 text-lg sm:text-2xl mt-1 sm:mt-0 sm:ml-2">- 主力資訊</span>
     </h1>
     
-    <div class="flex gap-4 mb-8">
-      <input 
-        v-model="stockNumber" 
-        type="text" 
-        placeholder="輸入股票代碼 (例: 4960)" 
-        class="border p-2 rounded w-64"
-        @keyup.enter="fetchData"
-      >
-      <button 
-        @click="fetchData" 
-        class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
-        :disabled="loading"
-      >
-        {{ loading ? '搜尋中...' : '搜尋' }}
-      </button>
-      <router-link to="/stats" class="ml-auto text-blue-600 hover:underline self-center">查看統計數據</router-link>
+    <div class="flex flex-col sm:flex-row gap-4 mb-8">
+      <div class="flex flex-1 gap-2">
+        <input 
+          v-model="stockNumber" 
+          type="text" 
+          placeholder="輸入股票代碼 (例: 4960)" 
+          class="border p-2 rounded flex-1 sm:w-64 min-w-0"
+          @keyup.enter="fetchData"
+        >
+        <button 
+          @click="fetchData" 
+          class="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded hover:bg-blue-700 transition whitespace-nowrap"
+          :disabled="loading"
+        >
+          {{ loading ? '搜尋中...' : '搜尋' }}
+        </button>
+      </div>
+      <router-link to="/stats" class="text-blue-600 hover:underline self-center sm:ml-auto">查看統計數據</router-link>
     </div>
 
     <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
       {{ error }}
     </div>
 
-    <div v-if="data" class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+    <div v-if="data" class="bg-white rounded-lg shadow border border-gray-200">
       <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
+        <table class="min-w-full divide-y divide-gray-200 table-auto">
           <thead class="bg-gray-50">
             <tr>
               <th class="px-3 py-3 sticky left-0 bg-gray-50 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r min-w-[120px]">券商名稱</th>
