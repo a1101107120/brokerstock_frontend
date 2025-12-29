@@ -38,7 +38,7 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">券商名稱</th>
+              <th class="px-3 py-3 sticky left-0 bg-gray-50 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r min-w-[120px]">券商名稱</th>
               <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r">個股明細</th>
               <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r">進出排行</th>
               <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r">分點進出</th>
@@ -49,8 +49,8 @@
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="broker in data.brokers_data" :key="broker.broker_name" class="hover:bg-gray-50 transition-colors">
-              <td class="px-3 py-4 whitespace-nowrap text-sm font-bold text-gray-900 border-r">{{ broker.broker_name }}</td>
-              <td class="px-3 py-4 whitespace-nowrap text-center text-sm border-r">
+              <td class="px-3 py-4 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-sm font-bold text-gray-900 border-r min-w-[120px]">{{ broker.broker_name }}</td>
+              <td class="px-3 py-4 whitespace-nowrap text-center text-sm border-r bg-white">
                 <a :href="broker.fubon_link" target="_blank" class="text-blue-600 hover:text-blue-900 hover:underline">查看</a>
               </td>
               <td class="px-3 py-4 whitespace-nowrap text-center text-sm border-r">
