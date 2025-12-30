@@ -20,13 +20,25 @@
           class="border p-2 rounded flex-1 sm:w-48 min-w-[120px]"
           @keyup.enter="fetchStockMainForceData"
         >
+        <input 
+          v-model="selectedDate" 
+          type="date" 
+          class="border p-2 rounded flex-1 sm:w-40 min-w-[120px]"
+        >
         <div class="flex gap-2 w-full sm:w-auto">
           <button 
             @click="fetchFollowedData" 
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition whitespace-nowrap flex-1"
             :disabled="loading"
           >
-            {{ loading && searchType === 'followed' ? '搜尋中...' : '關注券商查詢' }}
+            {{ loading && searchType === 'followed' ? '搜尋中...' : '關注即時爬蟲' }}
+          </button>
+          <button 
+            @click="fetchDbFollowedData" 
+            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition whitespace-nowrap flex-1"
+            :disabled="loading"
+          >
+            {{ loading && searchType === 'dbFollowed' ? '搜尋中...' : '資料庫查詢' }}
           </button>
           <button 
             @click="fetchStockMainForceData" 
@@ -111,7 +123,14 @@
     </div>
 
     <!-- 關注券商查詢結果 (原本的 fetchData) -->
-    <div v-if="searchType === 'followed' && data" class="bg-white rounded-lg shadow border border-gray-200">
+    <div v-if="(searchType === 'followed' || searchType === 'dbFollowed') && data" class="bg-white rounded-lg shadow border border-gray-200">
+      <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+        <span class="text-sm font-bold text-gray-700">
+          資料來源: {{ searchType === 'dbFollowed' ? '資料庫紀錄' : '即時爬蟲' }} 
+          <span class="ml-2 text-gray-500">({{ data.stock_number || '總表' }})</span>
+        </span>
+        <span v-if="searchType === 'dbFollowed'" class="text-xs text-blue-600 font-medium">日期: {{ selectedDate }}</span>
+      </div>
       <div v-if="data.total_stats" class="p-4 bg-blue-50 border-b border-gray-200 flex flex-wrap gap-6 items-center">
         <div class="text-sm font-bold text-blue-800">所有關注券商對 {{ data.stock_number }} 統計：</div>
         <div class="flex gap-4 text-sm">
@@ -257,12 +276,13 @@ import { ref } from 'vue';
 import api from '../api';
 
 const stockNumber = ref('');
+const selectedDate = ref(new Date().toISOString().split('T')[0]);
 const data = ref(null);
 const stockMainForceData = ref(null);
 const loading = ref(false);
 const error = ref(null);
 const historyData = ref(null);
-const searchType = ref(''); // 'followed', 'stockMainForce'
+const searchType = ref(''); // 'followed', 'dbFollowed', 'stockMainForce'
 
 const fetchFollowedData = async () => {
   if (!stockNumber.value) return;
@@ -274,6 +294,27 @@ const fetchFollowedData = async () => {
     data.value = response.data;
   } catch (err) {
     error.value = '抓取關注券商數據失敗。';
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const fetchDbFollowedData = async () => {
+  if (!stockNumber.value) return;
+  loading.value = true;
+  error.value = null;
+  searchType.value = 'dbFollowed';
+  try {
+    const response = await api.get(`/crawler/db-live/`, {
+      params: {
+        number: stockNumber.value,
+        date: selectedDate.value
+      }
+    });
+    data.value = response.data;
+  } catch (err) {
+    error.value = '抓取資料庫數據失敗，請確認該日期是否有存檔。';
     console.error(err);
   } finally {
     loading.value = false;
