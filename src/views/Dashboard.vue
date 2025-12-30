@@ -18,16 +18,9 @@
           type="text" 
           placeholder="股票代碼 (例: 4960)" 
           class="border p-2 rounded flex-1 sm:w-48 min-w-[120px]"
-          @keyup.enter="fetchMainForceData"
+          @keyup.enter="fetchStockMainForceData"
         >
         <div class="flex gap-2 w-full sm:w-auto">
-          <button 
-            @click="fetchMainForceData" 
-            class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition whitespace-nowrap flex-1"
-            :disabled="loading"
-          >
-            {{ loading && searchType === 'mainForce' ? '搜尋中...' : '主力搜尋' }}
-          </button>
           <button 
             @click="fetchFollowedData" 
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition whitespace-nowrap flex-1"
@@ -49,11 +42,6 @@
 
     <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
       {{ error }}
-    </div>
-
-    <!-- 主力搜尋結果 -->
-    <div v-if="searchType === 'mainForce' && mainForceData" class="bg-white rounded-lg shadow border border-gray-200 mb-8">
-      <!-- ... (existing main force table) ... -->
     </div>
 
     <!-- 股票主力結果 -->
@@ -129,8 +117,8 @@
         <div class="flex gap-4 text-sm">
           <span class="text-red-600">總買進: <span class="font-mono">{{ data.total_stats.buy }}</span></span>
           <span class="text-green-600">總賣出: <span class="font-mono">{{ data.total_stats.sell }}</span></span>
-          <span :class="data.total_stats.net >= 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'">
-            總買賣超: <span class="font-mono">{{ data.total_stats.net > 0 ? '+' : '' }}{{ data.total_stats.net }}</span>
+          <span :class="data.total_stats.net.startsWith('+') ? 'text-red-600 font-bold' : 'text-green-600 font-bold'">
+            總買賣超: <span class="font-mono">{{ data.total_stats.net }}</span>
           </span>
         </div>
       </div>
@@ -151,11 +139,11 @@
             <tr v-for="broker in data.brokers_data" :key="broker.broker_name" class="hover:bg-gray-50 transition-colors">
               <td class="px-3 py-4 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-sm font-bold text-gray-900 border-r min-w-[120px]">{{ broker.broker_name }}</td>
               <td class="px-3 py-4 whitespace-nowrap text-center text-sm border-r bg-white">
-                <div v-if="broker.specific_stats" class="mb-2 text-[10px] leading-tight text-left inline-block bg-gray-50 p-1 rounded border border-gray-100">
+                <div v-if="broker.specific_stats" class="mb-2 text-[10px] leading-tight text-left inline-block bg-gray-50 p-1 rounded border border-gray-100 min-w-[80px]">
                   <div class="text-red-600">買: {{ broker.specific_stats.buy }}</div>
                   <div class="text-green-600">賣: {{ broker.specific_stats.sell }}</div>
-                  <div :class="broker.specific_stats.net >= 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'" class="border-t border-gray-200 mt-1 pt-1">
-                    超: {{ broker.specific_stats.net > 0 ? '+' : '' }}{{ broker.specific_stats.net }}
+                  <div :class="broker.specific_stats.net.startsWith('+') ? 'text-red-600 font-bold' : 'text-green-600 font-bold'" class="border-t border-gray-200 mt-1 pt-1">
+                    超: {{ broker.specific_stats.net }}
                   </div>
                 </div>
                 <div class="mt-1">
@@ -270,28 +258,11 @@ import api from '../api';
 
 const stockNumber = ref('');
 const data = ref(null);
-const mainForceData = ref(null);
 const stockMainForceData = ref(null);
 const loading = ref(false);
 const error = ref(null);
 const historyData = ref(null);
-const searchType = ref(''); // 'mainForce', 'followed', 'stockMainForce'
-
-const fetchMainForceData = async () => {
-  if (!stockNumber.value) return;
-  loading.value = true;
-  error.value = null;
-  searchType.value = 'mainForce';
-  try {
-    const response = await api.get(`/crawler/main-force/?number=${stockNumber.value}`);
-    mainForceData.value = response.data;
-  } catch (err) {
-    error.value = '抓取主力數據失敗，請檢查股票代碼。';
-    console.error(err);
-  } finally {
-    loading.value = false;
-  }
-};
+const searchType = ref(''); // 'followed', 'stockMainForce'
 
 const fetchFollowedData = async () => {
   if (!stockNumber.value) return;
