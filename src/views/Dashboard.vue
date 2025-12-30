@@ -12,21 +12,30 @@
     </h1>
     
     <div class="flex flex-col sm:flex-row gap-4 mb-8">
-      <div class="flex flex-1 gap-2">
+      <div class="flex flex-1 gap-2 flex-wrap">
         <input 
           v-model="stockNumber" 
           type="text" 
-          placeholder="輸入股票代碼 (例: 4960)" 
-          class="border p-2 rounded flex-1 sm:w-64 min-w-0"
-          @keyup.enter="fetchData"
+          placeholder="股票代碼 (例: 4960)" 
+          class="border p-2 rounded flex-1 sm:w-48 min-w-[120px]"
+          @keyup.enter="fetchMainForceData"
         >
-        <button 
-          @click="fetchData" 
-          class="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded hover:bg-blue-700 transition whitespace-nowrap"
-          :disabled="loading"
-        >
-          {{ loading ? '搜尋中...' : '搜尋' }}
-        </button>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <button 
+            @click="fetchMainForceData" 
+            class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition whitespace-nowrap flex-1"
+            :disabled="loading"
+          >
+            {{ loading && searchType === 'mainForce' ? '搜尋中...' : '主力搜尋' }}
+          </button>
+          <button 
+            @click="fetchFollowedData" 
+            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition whitespace-nowrap flex-1"
+            :disabled="loading"
+          >
+            {{ loading && searchType === 'followed' ? '搜尋中...' : '關注券商查詢' }}
+          </button>
+        </div>
       </div>
       <router-link to="/stats" class="text-blue-600 hover:underline self-center sm:ml-auto">查看統計數據</router-link>
     </div>
@@ -35,7 +44,41 @@
       {{ error }}
     </div>
 
-    <div v-if="data" class="bg-white rounded-lg shadow border border-gray-200">
+    <!-- 主力搜尋結果 -->
+    <div v-if="searchType === 'mainForce' && mainForceData" class="bg-white rounded-lg shadow border border-gray-200 mb-8">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 table-auto">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-3 py-3 sticky left-0 bg-gray-50 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r min-w-[120px]">券商名稱</th>
+              <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-r">買進</th>
+              <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-r">賣出</th>
+              <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-r font-bold">買賣超</th>
+              <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r">日期</th>
+              <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">連結</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="item in mainForceData.main_force_data" :key="item.broker_name" class="hover:bg-gray-50 transition-colors">
+              <td class="px-3 py-4 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-sm font-bold text-gray-900 border-r min-w-[120px]">{{ item.broker_name }}</td>
+              <td class="px-3 py-4 text-right text-sm font-mono border-r text-red-600">{{ item.buy }}</td>
+              <td class="px-3 py-4 text-right text-sm font-mono border-r text-green-600">{{ item.sell }}</td>
+              <td class="px-3 py-4 text-right text-sm font-bold font-mono border-r" :class="item.net >= 0 ? 'text-red-600' : 'text-green-600'">
+                {{ item.net > 0 ? '+' : '' }}{{ item.net }}
+              </td>
+              <td class="px-3 py-4 text-center text-xs text-gray-500 font-mono border-r">{{ item.date }}</td>
+              <td class="px-3 py-4 whitespace-nowrap text-center text-sm flex gap-2 justify-center">
+                <a :href="item.fubon_link" target="_blank" class="text-blue-600 hover:underline">富邦</a>
+                <a :href="item.histock_link" target="_blank" class="text-blue-600 hover:underline">嗨投資</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 關注券商查詢結果 (原本的 fetchData) -->
+    <div v-if="searchType === 'followed' && data" class="bg-white rounded-lg shadow border border-gray-200">
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 table-auto">
           <thead class="bg-gray-50">
@@ -163,19 +206,38 @@ import api from '../api';
 
 const stockNumber = ref('');
 const data = ref(null);
+const mainForceData = ref(null);
 const loading = ref(false);
 const error = ref(null);
 const historyData = ref(null);
+const searchType = ref(''); // 'mainForce' or 'followed'
 
-const fetchData = async () => {
+const fetchMainForceData = async () => {
   if (!stockNumber.value) return;
   loading.value = true;
   error.value = null;
+  searchType.value = 'mainForce';
+  try {
+    const response = await api.get(`/crawler/main-force/?number=${stockNumber.value}`);
+    mainForceData.value = response.data;
+  } catch (err) {
+    error.value = '抓取主力數據失敗，請檢查股票代碼。';
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const fetchFollowedData = async () => {
+  if (!stockNumber.value) return;
+  loading.value = true;
+  error.value = null;
+  searchType.value = 'followed';
   try {
     const response = await api.get(`/crawler/live/?number=${stockNumber.value}`);
     data.value = response.data;
   } catch (err) {
-    error.value = '抓取數據失敗，請檢查股票代碼是否正確。';
+    error.value = '抓取關注券商數據失敗。';
     console.error(err);
   } finally {
     loading.value = false;
