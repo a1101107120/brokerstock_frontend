@@ -35,6 +35,13 @@
           >
             {{ loading && searchType === 'followed' ? '搜尋中...' : '關注券商查詢' }}
           </button>
+          <button 
+            @click="fetchStockMainForceData" 
+            class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 transition whitespace-nowrap flex-1"
+            :disabled="loading"
+          >
+            {{ loading && searchType === 'stockMainForce' ? '搜尋中...' : '股票主力' }}
+          </button>
         </div>
       </div>
       <router-link to="/stats" class="text-blue-600 hover:underline self-center sm:ml-auto">查看統計數據</router-link>
@@ -46,34 +53,72 @@
 
     <!-- 主力搜尋結果 -->
     <div v-if="searchType === 'mainForce' && mainForceData" class="bg-white rounded-lg shadow border border-gray-200 mb-8">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 table-auto">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-3 py-3 sticky left-0 bg-gray-50 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r min-w-[120px]">券商名稱</th>
-              <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-r">買進</th>
-              <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-r">賣出</th>
-              <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-r font-bold">買賣超</th>
-              <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r">日期</th>
-              <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">連結</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="item in mainForceData.main_force_data" :key="item.broker_name" class="hover:bg-gray-50 transition-colors">
-              <td class="px-3 py-4 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-sm font-bold text-gray-900 border-r min-w-[120px]">{{ item.broker_name }}</td>
-              <td class="px-3 py-4 text-right text-sm font-mono border-r text-red-600">{{ item.buy }}</td>
-              <td class="px-3 py-4 text-right text-sm font-mono border-r text-green-600">{{ item.sell }}</td>
-              <td class="px-3 py-4 text-right text-sm font-bold font-mono border-r" :class="item.net >= 0 ? 'text-red-600' : 'text-green-600'">
-                {{ item.net > 0 ? '+' : '' }}{{ item.net }}
-              </td>
-              <td class="px-3 py-4 text-center text-xs text-gray-500 font-mono border-r">{{ item.date }}</td>
-              <td class="px-3 py-4 whitespace-nowrap text-center text-sm flex gap-2 justify-center">
-                <a :href="item.fubon_link" target="_blank" class="text-blue-600 hover:underline">富邦</a>
-                <a :href="item.histock_link" target="_blank" class="text-blue-600 hover:underline">嗨投資</a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- ... (existing main force table) ... -->
+    </div>
+
+    <!-- 股票主力結果 -->
+    <div v-if="searchType === 'stockMainForce' && stockMainForceData" class="space-y-8">
+      <div class="bg-white rounded-lg shadow border border-gray-200 p-4">
+        <h2 class="text-xl font-bold mb-4 flex items-center">
+          <span class="w-2 h-6 bg-orange-600 rounded-full mr-2"></span>
+          股票主力總覽 - {{ stockMainForceData.stock_number }} ({{ stockMainForceData.date }})
+        </h2>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- 買進排行 -->
+          <div>
+            <h3 class="font-bold mb-3 text-red-600">買超前 15 名</h3>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200 border">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">券商</th>
+                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">買進</th>
+                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">賣出</th>
+                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">買超</th>
+                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">佔比</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-for="item in stockMainForceData.buy_list" :key="item.name" class="hover:bg-gray-50">
+                    <td class="px-3 py-2 text-sm font-medium">{{ item.name }}</td>
+                    <td class="px-3 py-2 text-right text-xs font-mono">{{ item.buy }}</td>
+                    <td class="px-3 py-2 text-right text-xs font-mono">{{ item.sell }}</td>
+                    <td class="px-3 py-2 text-right text-sm font-bold font-mono text-red-600">+{{ item.net }}</td>
+                    <td class="px-3 py-2 text-right text-xs text-gray-500">{{ item.percent }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 賣出排行 -->
+          <div>
+            <h3 class="font-bold mb-3 text-green-600">賣超前 15 名</h3>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200 border">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">券商</th>
+                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">買進</th>
+                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">賣出</th>
+                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">賣超</th>
+                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">佔比</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-for="item in stockMainForceData.sell_list" :key="item.name" class="hover:bg-gray-50">
+                    <td class="px-3 py-2 text-sm font-medium">{{ item.name }}</td>
+                    <td class="px-3 py-2 text-right text-xs font-mono">{{ item.buy }}</td>
+                    <td class="px-3 py-2 text-right text-xs font-mono">{{ item.sell }}</td>
+                    <td class="px-3 py-2 text-right text-sm font-bold font-mono text-green-600">{{ item.net }}</td>
+                    <td class="px-3 py-2 text-right text-xs text-gray-500">{{ item.percent }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -207,10 +252,11 @@ import api from '../api';
 const stockNumber = ref('');
 const data = ref(null);
 const mainForceData = ref(null);
+const stockMainForceData = ref(null);
 const loading = ref(false);
 const error = ref(null);
 const historyData = ref(null);
-const searchType = ref(''); // 'mainForce' or 'followed'
+const searchType = ref(''); // 'mainForce', 'followed', 'stockMainForce'
 
 const fetchMainForceData = async () => {
   if (!stockNumber.value) return;
@@ -238,6 +284,22 @@ const fetchFollowedData = async () => {
     data.value = response.data;
   } catch (err) {
     error.value = '抓取關注券商數據失敗。';
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const fetchStockMainForceData = async () => {
+  if (!stockNumber.value) return;
+  loading.value = true;
+  error.value = null;
+  searchType.value = 'stockMainForce';
+  try {
+    const response = await api.get(`/crawler/stock-main-force/?number=${stockNumber.value}`);
+    stockMainForceData.value = response.data;
+  } catch (err) {
+    error.value = '抓取股票主力數據失敗。';
     console.error(err);
   } finally {
     loading.value = false;
