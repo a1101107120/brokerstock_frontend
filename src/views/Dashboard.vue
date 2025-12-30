@@ -124,6 +124,16 @@
 
     <!-- 關注券商查詢結果 (原本的 fetchData) -->
     <div v-if="searchType === 'followed' && data" class="bg-white rounded-lg shadow border border-gray-200">
+      <div v-if="data.total_stats" class="p-4 bg-blue-50 border-b border-gray-200 flex flex-wrap gap-6 items-center">
+        <div class="text-sm font-bold text-blue-800">所有關注券商對 {{ data.stock_number }} 統計：</div>
+        <div class="flex gap-4 text-sm">
+          <span class="text-red-600">總買進: <span class="font-mono">{{ data.total_stats.buy }}</span></span>
+          <span class="text-green-600">總賣出: <span class="font-mono">{{ data.total_stats.sell }}</span></span>
+          <span :class="data.total_stats.net >= 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'">
+            總買賣超: <span class="font-mono">{{ data.total_stats.net > 0 ? '+' : '' }}{{ data.total_stats.net }}</span>
+          </span>
+        </div>
+      </div>
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 table-auto">
           <thead class="bg-gray-50">
@@ -141,7 +151,16 @@
             <tr v-for="broker in data.brokers_data" :key="broker.broker_name" class="hover:bg-gray-50 transition-colors">
               <td class="px-3 py-4 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-sm font-bold text-gray-900 border-r min-w-[120px]">{{ broker.broker_name }}</td>
               <td class="px-3 py-4 whitespace-nowrap text-center text-sm border-r bg-white">
-                <a :href="broker.fubon_link" target="_blank" class="text-blue-600 hover:text-blue-900 hover:underline">查看</a>
+                <div v-if="broker.specific_stats" class="mb-2 text-[10px] leading-tight text-left inline-block bg-gray-50 p-1 rounded border border-gray-100">
+                  <div class="text-red-600">買: {{ broker.specific_stats.buy }}</div>
+                  <div class="text-green-600">賣: {{ broker.specific_stats.sell }}</div>
+                  <div :class="broker.specific_stats.net >= 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'" class="border-t border-gray-200 mt-1 pt-1">
+                    超: {{ broker.specific_stats.net > 0 ? '+' : '' }}{{ broker.specific_stats.net }}
+                  </div>
+                </div>
+                <div class="mt-1">
+                  <a :href="broker.fubon_link" target="_blank" class="text-blue-600 hover:text-blue-900 hover:underline">查看-{{ stockNumber }}</a>
+                </div>
               </td>
               <td class="px-3 py-4 whitespace-nowrap text-center text-sm border-r">
                 <a :href="broker.fubon_ranking_link" target="_blank" class="text-blue-600 hover:text-blue-900 hover:underline">排行</a>
