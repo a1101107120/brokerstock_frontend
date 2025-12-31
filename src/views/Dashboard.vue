@@ -327,7 +327,12 @@ const fetchStockMainForceData = async () => {
   error.value = null;
   searchType.value = 'stockMainForce';
   try {
-    const response = await api.get(`/crawler/stock-main-force/?number=${stockNumber.value}`);
+    const response = await api.get(`/crawler/stock-main-force/`, {
+      params: {
+        number: stockNumber.value,
+        date: selectedDate.value
+      }
+    });
     stockMainForceData.value = response.data;
   } catch (err) {
     error.value = '抓取股票主力數據失敗。';
