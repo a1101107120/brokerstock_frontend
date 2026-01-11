@@ -395,7 +395,7 @@
 import { ref } from 'vue';
 import api from '../api';
 
-const stockNumber = ref('');
+const stockNumber = ref('2330');
 const selectedDate = ref(new Date().toISOString().split('T')[0]);
 const data = ref(null);
 const stockMainForceData = ref(null);
@@ -403,6 +403,12 @@ const loading = ref(false);
 const error = ref(null);
 const historyData = ref(null);
 const searchType = ref(''); // 'followed', 'dbFollowed', 'stockMainForce'
+
+import { onMounted } from 'vue';
+
+onMounted(() => {
+  fetchStockMainForceData();
+});
 
 const fetchFollowedData = async () => {
   if (!stockNumber.value) return;
